@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promoções - Market Online</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-store me-2"></i>Market Online
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Início</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/promotions">
+                            <i class="fas fa-tags me-1"></i>Promoções
+                        </a>
+                    </li>
+                </ul>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/support">
+                            <i class="fas fa-headset me-1"></i>
+                            <span class="d-none d-md-inline">Suporte</span>
+                        </a>
+                    </li>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item" id="cart-nav">
+                        <a class="nav-link" href="/cart">
+                            <i class="fas fa-shopping-cart me-1"></i>
+                            <span class="d-none d-md-inline">Carrinho</span>
+                            <span id="cart-count" class="badge bg-warning">0</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" id="user-nav" style="display: none;">
+                        <div class="nav-link dropdown">
+                            <a class="dropdown-toggle text-white text-decoration-none" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user me-1"></i>
+                                <span id="user-name" class="d-none d-md-inline"></span>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/orders">Meus Pedidos</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" id="logout-btn">Sair</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li class="nav-item" id="admin-nav" style="display: none;">
+                        <a class="nav-link" href="/admin">
+                            <i class="fas fa-cog me-1"></i>
+                            <span class="d-none d-md-inline">Admin</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" id="auth-nav">
+                        <a class="nav-link" href="/login">
+                            <i class="fas fa-sign-in-alt me-1"></i>
+                            <span class="d-none d-sm-inline">Entrar</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container my-4">
+            <!-- Hero Section for Promotions -->
+            <div class="promotions-hero bg-gradient-danger text-white p-4 p-md-5 rounded mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="display-5 display-md-4 fw-bold mb-3">
+                            <i class="fas fa-fire me-2"></i>Ofertas Imperdíveis
+                        </h1>
+                        <p class="lead mb-4">Aproveite os melhores descontos em produtos selecionados. Ofertas por tempo limitado!</p>
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="badge bg-light text-dark fs-6 px-3 py-2">
+                                <i class="fas fa-percentage me-1"></i>Até 70% OFF
+                            </span>
+                            <span class="badge bg-light text-dark fs-6 px-3 py-2">
+                                <i class="fas fa-clock me-1"></i>Tempo Limitado
+                            </span>
+                            <span class="badge bg-light text-dark fs-6 px-3 py-2">
+                                <i class="fas fa-shipping-fast me-1"></i>Frete Grátis
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-center mt-3 mt-md-0">
+                        <i class="fas fa-tags fa-4x fa-md-5x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtros Mobile-First -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-3">
+                            <div class="row g-2">
+                                <div class="col-12 col-md-6">
+                                    <h4 class="mb-2 mb-md-3">
+                                        <i class="fas fa-fire text-danger me-2"></i>Produtos em Promoção
+                                    </h4>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <div class="d-flex gap-2">
+                                        <select class="form-select form-select-sm" id="category-filter">
+                                            <option value="todas">Todas as Categorias</option>
+                                        </select>
+                                        <button class="btn btn-outline-primary btn-sm" onclick="loadPromotions()">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contador de Ofertas -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="alert alert-warning border-0 shadow-sm">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                            <div>
+                                <h6 class="mb-1">Ofertas por Tempo Limitado!</h6>
+                                <p class="mb-0" id="promotions-count">Carregando ofertas...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid de Produtos em Promoção -->
+            <div class="row" id="promotions-grid">
+                <div class="col-12 text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Call to Action -->
+            <div class="row mt-5">
+                <div class="col-12">
+                    <div class="card bg-primary text-white border-0">
+                        <div class="card-body text-center p-4">
+                            <h5 class="card-title">Não encontrou o que procurava?</h5>
+                            <p class="card-text">Explore todos os nossos produtos e encontre as melhores ofertas!</p>
+                            <a href="/" class="btn btn-light btn-lg">
+                                <i class="fas fa-shopping-bag me-2"></i>Ver Todos os Produtos
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            loadCategories();
+            loadPromotions();
+            updateCartCount();
+        });
+
+        async function loadPromotions() {
+            const categoryFilter = document.getElementById('category-filter');
+            const categoria = categoryFilter ? categoryFilter.value : 'todas';
+            
+            try {
+                let url = '/api/products';
+                if (categoria && categoria !== 'todas') {
+                    url += `?categoria=${encodeURIComponent(categoria)}`;
+                }
+                
+                const response = await fetch(url);
+                const products = await response.json();
+                
+                if (response.ok) {
+                    // Filtrar apenas produtos com promoção
+                    const promotionalProducts = products.filter(product => 
+                        product.desconto_percentual && product.desconto_percentual > 0
+                    );
+                    displayPromotions(promotionalProducts);
+                    updatePromotionsCount(promotionalProducts.length);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar promoções:', error);
+            }
+        }
+
+        function displayPromotions(products) {
+            const promotionsGrid = document.getElementById('promotions-grid');
+            
+            if (products.length === 0) {
+                promotionsGrid.innerHTML = `
+                    <div class="col-12 text-center">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body p-5">
+                                <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                                <h5>Nenhuma promoção ativa no momento</h5>
+                                <p class="text-muted">Volte em breve para conferir nossas ofertas especiais!</p>
+                                <a href="/" class="btn btn-primary">Ver Todos os Produtos</a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            
+            products.forEach(product => {
+                const finalPrice = product.preco * (1 - product.desconto_percentual / 100);
+                const savings = product.preco - finalPrice;
+                const isOutOfStock = product.estoque === 0;
+                
+                html += `
+                    <div class="col-6 col-md-4 col-lg-3 mb-4">
+                        <div class="card product-card h-100 border-0 shadow-sm">
+                            <div class="position-relative">
+                                <span class="badge bg-danger position-absolute top-0 start-0 m-2 z-3">
+                                    ${product.desconto_percentual}% OFF
+                                </span>
+                                ${isOutOfStock ? `
+                                    <span class="badge bg-secondary position-absolute top-0 end-0 m-2 z-3">
+                                        Sem Estoque
+                                    </span>
+                                ` : ''}
+                                
+                                <img src="/images/${product.imagem || 'no-image.jpg'}" 
+                                     class="card-img-top" 
+                                     alt="${product.nome}"
+                                     style="height: 180px; object-fit: cover;">
+                            </div>
+                            
+                            <div class="card-body d-flex flex-column p-3">
+                                <h6 class="card-title mb-2 text-truncate" title="${product.nome}">
+                                    ${product.nome}
+                                </h6>
+                                <p class="card-text text-muted small mb-2">${product.categoria}</p>
+                                
+                                <div class="price-section mt-auto">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <small class="text-muted text-decoration-line-through me-2">
+                                            R$ ${product.preco.toFixed(2)}
+                                        </small>
+                                        <small class="badge bg-success">
+                                            Economize R$ ${savings.toFixed(2)}
+                                        </small>
+                                    </div>
+                                    <div class="price text-success fw-bold fs-5">
+                                        R$ ${finalPrice.toFixed(2)}
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-3 d-grid gap-2">
+                                    <a href="/product/${product.id}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye me-1"></i>Ver Detalhes
+                                    </a>
+                                    <button class="btn btn-success btn-sm" 
+                                            onclick="addToCartFromList(${product.id})"
+                                            ${isOutOfStock ? 'disabled' : ''}>
+                                        <i class="fas fa-cart-plus me-1"></i>
+                                        ${isOutOfStock ? 'Sem Estoque' : 'Adicionar'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            promotionsGrid.innerHTML = html;
+        }
+
+        function updatePromotionsCount(count) {
+            const countElement = document.getElementById('promotions-count');
+            if (countElement) {
+                if (count === 0) {
+                    countElement.textContent = 'Nenhuma promoção ativa no momento.';
+                } else if (count === 1) {
+                    countElement.textContent = '1 produto em promoção disponível!';
+                } else {
+                    countElement.textContent = `${count} produtos em promoção disponíveis!`;
+                }
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrinho - Market Online</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-store me-2"></i>Market Online
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Início</a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/cart">
+                            <i class="fas fa-shopping-cart me-1"></i>
+                            Carrinho <span id="cart-count" class="badge bg-warning">0</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" id="user-nav" style="display: none;">
+                        <div class="nav-link dropdown">
+                            <a class="dropdown-toggle text-white text-decoration-none" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user me-1"></i>
+                                <span id="user-name"></span>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/orders">Meus Pedidos</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" id="logout-btn">Sair</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li class="nav-item" id="admin-nav" style="display: none;">
+                        <a class="nav-link" href="/admin">
+                            <i class="fas fa-cog me-1"></i>Admin
+                        </a>
+                    </li>
+                    <li class="nav-item" id="auth-nav">
+                        <a class="nav-link" href="/login">
+                            <i class="fas fa-sign-in-alt me-1"></i>Entrar
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container my-4">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Início</a></li>
+                    <li class="breadcrumb-item active">Carrinho</li>
+                </ol>
+            </nav>
+
+            <h2 class="mb-4">
+                <i class="fas fa-shopping-cart me-2"></i>Meu Carrinho
+            </h2>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div id="cart-items">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Carregando...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Resumo do Pedido</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-3">
+                                <span>Total:</span>
+                                <span class="fw-bold text-success" id="cart-total">R$ 0,00</span>
+                            </div>
+                            <button class="btn btn-success w-100" id="checkout-btn" onclick="checkout()" disabled>
+                                <i class="fas fa-check me-2"></i>Finalizar Pedido
+                            </button>
+                            <a href="/" class="btn btn-outline-primary w-100 mt-2">
+                                <i class="fas fa-arrow-left me-2"></i>Continuar Comprando
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            loadCart();
+        });
+
+        async function loadCart() {
+            try {
+                const response = await fetch('/api/cart');
+                
+                if (response.status === 401) {
+                    document.getElementById('cart-items').innerHTML = `
+                        <div class="alert alert-warning text-center">
+                            <h5>Você precisa fazer login para ver seu carrinho</h5>
+                            <a href="/login" class="btn btn-primary">Fazer Login</a>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const cartItems = await response.json();
+                
+                if (response.ok) {
+                    displayCart(cartItems);
+                    updateCartCount();
+                }
+            } catch (error) {
+                console.error('Erro ao carregar carrinho:', error);
+            }
+        }
+
+        function displayCart(items) {
+            const cartContainer = document.getElementById('cart-items');
+            
+            if (items.length === 0) {
+                cartContainer.innerHTML = `
+                    <div class="alert alert-info text-center">
+                        <h5>Seu carrinho está vazio</h5>
+                        <p>Adicione alguns produtos para continuar</p>
+                        <a href="/" class="btn btn-primary">Ver Produtos</a>
+                    </div>
+                `;
+                document.getElementById('checkout-btn').disabled = true;
+                document.getElementById('cart-total').textContent = 'R$ 0,00';
+                return;
+            }
+            
+            let total = 0;
+            let html = '';
+            
+            items.forEach(item => {
+                const itemTotal = item.preco_final * item.quantidade;
+                total += itemTotal;
+                
+                const hasDiscount = item.preco_final < item.preco;
+                
+                html += `
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-2">
+                                    <img src="/images/${item.imagem || 'no-image.jpg'}" 
+                                         alt="${item.nome}" 
+                                         class="img-fluid rounded">
+                                </div>
+                                <div class="col-md-4">
+                                    <h6 class="mb-1">${item.nome}</h6>
+                                    ${hasDiscount ? `
+                                        <small class="text-muted text-decoration-line-through">
+                                            R$ ${item.preco.toFixed(2)}
+                                        </small>
+                                        <br>
+                                    ` : ''}
+                                    <span class="text-success fw-bold">
+                                        R$ ${item.preco_final.toFixed(2)}
+                                    </span>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="input-group input-group-sm">
+                                        <button class="btn btn-outline-secondary" 
+                                                onclick="updateQuantity(${item.id}, ${item.quantidade - 1})"
+                                                ${item.quantidade <= 1 ? 'disabled' : ''}>
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <input type="number" class="form-control text-center" 
+                                               value="${item.quantidade}" min="1" max="${item.estoque}"
+                                               onchange="updateQuantity(${item.id}, this.value)">
+                                        <button class="btn btn-outline-secondary" 
+                                                onclick="updateQuantity(${item.id}, ${item.quantidade + 1})"
+                                                ${item.quantidade >= item.estoque ? 'disabled' : ''}>
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <small class="text-muted">Estoque: ${item.estoque}</small>
+                                </div>
+                                <div class="col-md-2">
+                                    <strong>R$ ${itemTotal.toFixed(2)}</strong>
+                                </div>
+                                <div class="col-md-1">
+                                    <button class="btn btn-outline-danger btn-sm" 
+                                            onclick="removeFromCart(${item.id})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            cartContainer.innerHTML = html;
+            document.getElementById('cart-total').textContent = `R$ ${total.toFixed(2)}`;
+            document.getElementById('checkout-btn').disabled = false;
+        }
+
+        async function updateQuantity(itemId, newQuantity) {
+            if (newQuantity < 1) return;
+            
+            try {
+                const response = await fetch(`/api/cart/${itemId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ quantidade: newQuantity })
+                });
+                
+                if (response.ok) {
+                    loadCart();
+                }
+            } catch (error) {
+                console.error('Erro ao atualizar quantidade:', error);
+            }
+        }
+
+        async function removeFromCart(itemId) {
+            try {
+                const response = await fetch(`/api/cart/${itemId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    showToast('Item removido do carrinho', 'success');
+                    loadCart();
+                }
+            } catch (error) {
+                console.error('Erro ao remover item:', error);
+            }
+        }
+
+        async function checkout() {
+            try {
+                const response = await fetch('/api/orders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast('Pedido realizado com sucesso!', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/orders';
+                    }, 1500);
+                } else {
+                    showToast(data.error, 'danger');
+                }
+            } catch (error) {
+                showToast('Erro ao finalizar pedido', 'danger');
+            }
+        }
+    </script>
+</body>
+</html>

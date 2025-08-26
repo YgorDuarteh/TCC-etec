@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus Pedidos - Market Online</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                <i class="fas fa-store me-2"></i>Market Online
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Início</a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item" id="cart-nav">
+                        <a class="nav-link" href="/cart">
+                            <i class="fas fa-shopping-cart me-1"></i>
+                            Carrinho <span id="cart-count" class="badge bg-warning">0</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" id="user-nav" style="display: none;">
+                        <div class="nav-link dropdown">
+                            <a class="dropdown-toggle text-white text-decoration-none" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user me-1"></i>
+                                <span id="user-name"></span>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item active" href="/orders">Meus Pedidos</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#" id="logout-btn">Sair</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li class="nav-item" id="admin-nav" style="display: none;">
+                        <a class="nav-link" href="/admin">
+                            <i class="fas fa-cog me-1"></i>Admin
+                        </a>
+                    </li>
+                    <li class="nav-item" id="auth-nav">
+                        <a class="nav-link" href="/login">
+                            <i class="fas fa-sign-in-alt me-1"></i>Entrar
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container my-4">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Início</a></li>
+                    <li class="breadcrumb-item active">Meus Pedidos</li>
+                </ol>
+            </nav>
+
+            <h2 class="mb-4">
+                <i class="fas fa-shopping-bag me-2"></i>Meus Pedidos
+            </h2>
+
+            <div id="orders-list">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Carregando...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Order Details Modal -->
+    <div class="modal fade" id="orderModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalhes do Pedido</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modal-content">
+                    <!-- Content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            updateCartCount();
+            loadOrders();
+        });
+
+        async function loadOrders() {
+            try {
+                const response = await fetch('/api/orders');
+                
+                if (response.status === 401) {
+                    document.getElementById('orders-list').innerHTML = `
+                        <div class="alert alert-warning text-center">
+                            <h5>Você precisa fazer login para ver seus pedidos</h5>
+                            <a href="/login" class="btn btn-primary">Fazer Login</a>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const orders = await response.json();
+                
+                if (response.ok) {
+                    displayOrders(orders);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar pedidos:', error);
+            }
+        }
+
+        function displayOrders(orders) {
+            const ordersContainer = document.getElementById('orders-list');
+            
+            if (orders.length === 0) {
+                ordersContainer.innerHTML = `
+                    <div class="alert alert-info text-center">
+                        <h5>Você ainda não fez nenhum pedido</h5>
+                        <p>Explore nossa loja e faça seu primeiro pedido</p>
+                        <a href="/" class="btn btn-primary">Ver Produtos</a>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            
+            orders.forEach(order => {
+                const statusColor = getStatusColor(order.status);
+                const statusIcon = getStatusIcon(order.status);
+                
+                html += `
+                    <div class="card mb-3">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">Pedido #${order.id}</h6>
+                                <small class="text-muted">${formatDate(order.data)}</small>
+                            </div>
+                            <span class="badge bg-${statusColor}">
+                                <i class="${statusIcon} me-1"></i>${order.status}
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <strong>Total: R$ ${order.total.toFixed(2)}</strong>
+                                </div>
+                                <div class="col-md-6 text-md-end">
+                                    <button class="btn btn-outline-primary btn-sm" 
+                                            onclick="viewOrderDetails(${order.id})">
+                                        <i class="fas fa-eye me-1"></i>Ver Detalhes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            ordersContainer.innerHTML = html;
+        }
+
+        function getStatusColor(status) {
+            switch (status.toLowerCase()) {
+                case 'pendente': return 'warning';
+                case 'processando': return 'info';
+                case 'enviado': return 'primary';
+                case 'entregue': return 'success';
+                case 'cancelado': return 'danger';
+                default: return 'secondary';
+            }
+        }
+
+        function getStatusIcon(status) {
+            switch (status.toLowerCase()) {
+                case 'pendente': return 'fas fa-clock';
+                case 'processando': return 'fas fa-cog';
+                case 'enviado': return 'fas fa-truck';
+                case 'entregue': return 'fas fa-check';
+                case 'cancelado': return 'fas fa-times';
+                default: return 'fas fa-info';
+            }
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-BR') + ' às ' + date.toLocaleTimeString('pt-BR');
+        }
+
+        async function viewOrderDetails(orderId) {
+            try {
+                const response = await fetch(`/api/orders/${orderId}/items`);
+                const items = await response.json();
+                
+                if (response.ok) {
+                    displayOrderDetails(orderId, items);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar detalhes do pedido:', error);
+            }
+        }
+
+        function displayOrderDetails(orderId, items) {
+            let html = `
+                <h6>Pedido #${orderId}</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Quantidade</th>
+                                <th>Preço Unit.</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            let grandTotal = 0;
+            
+            items.forEach(item => {
+                const itemTotal = item.preco * item.quantidade;
+                grandTotal += itemTotal;
+                
+                html += `
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img src="/images/${item.imagem || 'no-image.jpg'}" 
+                                     alt="${item.nome}" 
+                                     class="me-2" 
+                                     style="width: 40px; height: 40px; object-fit: cover;">
+                                ${item.nome}
+                            </div>
+                        </td>
+                        <td>${item.quantidade}</td>
+                        <td>R$ ${item.preco.toFixed(2)}</td>
+                        <td>R$ ${itemTotal.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+            
+            html += `
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-active">
+                                <th colspan="3">Total do Pedido:</th>
+                                <th>R$ ${grandTotal.toFixed(2)}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            `;
+            
+            document.getElementById('modal-content').innerHTML = html;
+            
+            const modal = new bootstrap.Modal(document.getElementById('orderModal'));
+            modal.show();
+        }
+    </script>
+</body>
+</html>
